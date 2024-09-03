@@ -31,3 +31,43 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+
+
+// Register controller
+exports.register = async (req, res) => {
+  const { displayName, email, password, companyEmail, plan } = req.body;
+  try {
+    // Check if the company already exists
+    const existingCompany = await Company.findOne({ email: email });
+    if (existingCompany) {
+      return res.status(400).json({ state: false, message: "Company already exists" });
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new company
+    const newCompany = new Company({
+      displayName,
+      email,
+      password: hashedPassword,
+      companyEmail,
+      plan
+    });
+
+    // Save the company to the database
+    await newCompany.save();
+
+    // Generate a token
+    const payload = { _id: newCompany._id, email: newCompany.email };
+    const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+
+    // Send a response with the token
+    res.status(201).json({ state: true, token });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ state: false, message: "Registration Failed" });
+  }
+};

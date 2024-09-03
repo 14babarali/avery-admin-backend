@@ -8,6 +8,7 @@ const i18n = require('i18n');
 const appRouter = require("./routes/appRouter");
 const apiRouter = require("./routes/apiRouter");
 const adminRouter = require("./routes/adminRouter")
+const authRouter = require("./routes/authRouter")
 const loaders = require("./loaders");
 const logger = require('./utils/logger');
 const { port } = require('./config/main');
@@ -51,6 +52,7 @@ const startServer = async () => {
     app.use("/", appRouter);
     app.use("/api", apiRouter);
     app.use("/api/admin", adminRouter);
+    app.use("/api/auth", authRouter)
 
     await loaders({ app });
     server.listen(port, () => {

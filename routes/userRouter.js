@@ -10,7 +10,6 @@ router.get("/getAccounts", usermiddleware, userController.getAccounts)
 router.post("/getProfit", usermiddleware, userController.getProfit)
 router.post("/updatePassword", usermiddleware, userController.updatePassword)
 router.post("/getUserInfo", usermiddleware, userController.getUserInfo)
-router.post("/submit-kyc", usermiddleware, userController.kyc )
 router.post("/submit-agreement", usermiddleware, userController.submitAgreement)
 
 module.exports = router;
