@@ -14,10 +14,10 @@ router.post("/login", authControl.login);
 router.post("/createCompany", adminmiddleware, companyController.createCompany)
 
 router.get("/getCustomers", adminmiddleware, customerController.getCustomers);
+// get all kyc submissions
 router.get("/kyc-submissions", adminmiddleware , customerController.getKYCSubmissions);
 router.post("/createCustomer", adminmiddleware, customerController.createCustomer);
 router.post("/updateCustomer", adminmiddleware, customerController.updateCustomer);
-router.post("/submit-kyc", adminmiddleware, customerController.kyc )
 router.post("/deleteCustomer", adminmiddleware, customerController.deleteCustomer);
 
 router.get("/getAccounts", adminmiddleware, accountController.getAccounts);

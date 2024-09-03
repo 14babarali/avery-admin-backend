@@ -11,5 +11,7 @@ router.post("/getProfit", usermiddleware, userController.getProfit)
 router.post("/updatePassword", usermiddleware, userController.updatePassword)
 router.post("/getUserInfo", usermiddleware, userController.getUserInfo)
 router.post("/submit-agreement", usermiddleware, userController.submitAgreement)
+//submit kyc endpoint
+router.post("/submit-kyc", usermiddleware, userController.kyc )
 
 module.exports = router;
