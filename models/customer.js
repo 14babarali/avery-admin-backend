@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 
 const CustomerSchema = new Schema(
   {
+    kyc: { type: mongoose.Schema.Types.ObjectId, ref: "KYC" },
     email: {
       type: String,
       required: true,

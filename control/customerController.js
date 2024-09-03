@@ -81,6 +81,7 @@ exports.createCustomer = async (req, res) => {
     });
   }
 };
+
 exports.getCustomers = async (req, res) => {
   try {
     const token = req.headers.authorization || "";
@@ -204,3 +205,31 @@ exports.deleteCustomer = async (req, res) => {
       .send({ message: "An error occurred while deleting the customer." });
   }
 };
+
+
+//added to create kyc for customers 
+exports.kyc = async (req, res) => {
+  try {
+      const kycData = new KYC({
+          customer: req.user._id,  
+          name: req.body.name,
+          address: req.body.address,
+          birthday: req.body.birthday,
+          idDocument: req.body.idDocument, // Assuming file path is provided
+          proofOfAddress: req.body.proofOfAddress, // Assuming file path is provided
+      });
+
+      const savedKYC = await kycData.save();
+      
+      // Update user's account with KYC status
+      await Account.findOneAndUpdate(
+          { accountUser: req.user._id },
+          { kycStatus: "Pending", kyc: savedKYC._id }
+      );
+
+      res.status(200).json({ message: "KYC submitted successfully", kyc: savedKYC });
+  } catch (error) {
+      res.status(500).json({ message: "Error submitting KYC", error });
+  }
+};
+

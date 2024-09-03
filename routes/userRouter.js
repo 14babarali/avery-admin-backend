@@ -10,8 +10,9 @@ router.get("/getAccounts", usermiddleware, userController.getAccounts)
 router.post("/getProfit", usermiddleware, userController.getProfit)
 router.post("/updatePassword", usermiddleware, userController.updatePassword)
 router.post("/getUserInfo", usermiddleware, userController.getUserInfo)
+
+//Endpoint added for users to submit agreement
 router.post("/submit-agreement", usermiddleware, userController.submitAgreement)
-//submit kyc endpoint
-router.post("/submit-kyc", usermiddleware, userController.kyc )
+
 
 module.exports = router;

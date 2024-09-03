@@ -11,12 +11,15 @@ const app = express();
 
 router.post("/login", authControl.login);
 
+//submit kyc endpoint
+router.post("/submit-kyc", customerController.kyc )
+
 router.post("/createCompany", adminmiddleware, companyController.createCompany)
 
 router.get("/getCustomers", adminmiddleware, customerController.getCustomers);
 // get all kyc submissions
 router.get("/kyc-submissions", adminmiddleware , customerController.getKYCSubmissions);
-router.post("/createCustomer", adminmiddleware, customerController.createCustomer);
+router.post("/createCustomer",  customerController.createCustomer);
 router.post("/updateCustomer", adminmiddleware, customerController.updateCustomer);
 router.post("/deleteCustomer", adminmiddleware, customerController.deleteCustomer);
 
