@@ -161,3 +161,12 @@ exports.getMT4Account = async (req, res) => {
       .send(`GetMt4Account Failed with Error | ${error.message}`);
   }
 };
+
+exports.emailSettings = async (req, res) => {
+  try {
+    const updatedConfig = await smtpConfig.findOneAndUpdate({}, req.body, { upsert: true });
+    res.json(updatedConfig);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update SMTP settings' });
+  }
+}

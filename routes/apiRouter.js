@@ -11,5 +11,9 @@ router.use("/users", userRouter )
 router.post("/updateAccount", thirdPartymiddleware, apiController.updateAccount);
 router.post("/getData", apiController.getMT4Account)
 
+//email
+
+router.post('/settings/email', apiController.emailSettings)
+
 
 module.exports = router;

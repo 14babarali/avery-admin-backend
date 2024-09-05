@@ -1,3 +1,4 @@
+//utils/emailTrigger
 const mailgun = require("mailgun-js");
 const { smtpConfig, emailTemplate } = require("../models");
 
