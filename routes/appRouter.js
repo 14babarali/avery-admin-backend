@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const customerController = require("../control/customerController")
 const authControl = require("../control/authController");
+const orderController = require("../control/orderController")
 const accountController = require("../control/accountController");
 const companyController = require("../control/companyController");
 const planController = require("../control/planController");
@@ -14,10 +15,15 @@ router.get('/', (req, res) => {
     res.status(200).json({ message: 'Welcome to the server' });
 });
 
-router.post('/webhooks/woocommerce', (req, res) => {
-    console.log(req.body);
-    res.status(200).send('Webhook received!');
-  });
+// Webhook endpoint to receive WooCommerce order updates
+router.post('/webhooks/woocommerce', orderController.webhook );
+router.get('/orders', orderController.getOrders);
+router.put('/orders/:id', orderController.upDateOrder );
+router.delete('/orders/:id/archive', orderController.archiveOrder);
+
+  
+
+
 
 router.post("/login", authControl.login);
 

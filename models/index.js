@@ -20,6 +20,7 @@ db.Plan = require("./plan");
 db.KYC = require("./kyc");
 db.emailTemplate = require("./emailTemplate");
 db.smtpConfig = require("./smtpConfig");
+db.Order = require("./order");
 
 db.sync = async () => {
   // Migrate (clear collections and add initial data if necessary)
