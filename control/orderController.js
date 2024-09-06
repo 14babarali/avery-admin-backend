@@ -6,6 +6,8 @@ const { Order } = require("../models");
 exports.webhook = async (req, res) => {
     try {
         const orderData = req.body;
+        // Log the order data being processed
+        console.log('Processing order data:', orderData);
         // Save or update order in the database
         const existingOrder = await Order.findOne({ order_key: orderData.order_key });
         if (existingOrder) {
