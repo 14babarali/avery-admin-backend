@@ -9,6 +9,11 @@ const { adminmiddleware } = require('../middleware/adminmiddleware');
 
 const app = express();
 
+// Define a GET route for the root path
+router.get('/', (req, res) => {
+    res.status(200).json({ message: 'Welcome to the server' });
+});
+
 router.post("/login", authControl.login);
 
 //submit kyc endpoint
