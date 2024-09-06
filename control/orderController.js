@@ -41,16 +41,13 @@ exports.webhook = async (req, res) => {
 
 // Update or delete order
 exports.archiveOrder = async (req, res) => {
-    try {
-        // Find the order by ID and mark it as archived
-        const archivedOrder = await Order.findByIdAndUpdate(req.params.id, { archived: true }, { new: true });
-        
-        if (!archivedOrder) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
+    const { id } = req.params;
 
-        res.json({ message: 'Order archived successfully', order: archivedOrder });
+    try {
+        const updatedOrder = await Order.findByIdAndUpdate(id, { archived: true }, { new: true });
+        res.json(updatedOrder);
     } catch (error) {
-        res.status(500).json({ error: 'Error archiving order' });
+        console.error('Error archiving order:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 };
