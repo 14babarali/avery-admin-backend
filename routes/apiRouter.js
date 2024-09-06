@@ -8,6 +8,7 @@ const app = express();
 
 router.use("/users", userRouter )
 
+
 router.post("/updateAccount", thirdPartymiddleware, apiController.updateAccount);
 router.post("/getData", apiController.getMT4Account)
 

@@ -16,6 +16,11 @@ router.get('/', (req, res) => {
 
 router.post("/login", authControl.login);
 
+app.post('/webhooks/woocommerce', (req, res) => {
+    console.log(req.body);
+    res.status(200).send('Webhook received!');
+  });
+
 //submit kyc endpoint
 router.post("/submit-kyc", customerController.kyc )
 
