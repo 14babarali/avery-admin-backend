@@ -31,3 +31,20 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.register = async (req, res) => {
+  const { email, username, password } = req.body;
+  try {
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Create a new company (user)
+    const company = await Company.create({ email, username, password: hashedPassword });
+    // Generate a token
+    const token = jwt.sign({ _id: company._id }, secretKey, { expiresIn: "1h" });
+    // Return the token and a success message
+    return res.status(201).json({ state: true, token: token });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ state: false, message: "An error occurred during registration." });
+  }
+};

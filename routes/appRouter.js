@@ -10,6 +10,7 @@ const { adminmiddleware } = require('../middleware/adminmiddleware');
 const app = express();
 
 router.post("/login", authControl.login);
+router.post("/register", authControl.register);
 
 //submit kyc endpoint
 router.post("/submit-kyc", customerController.kyc )
