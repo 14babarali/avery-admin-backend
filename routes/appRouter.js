@@ -16,7 +16,7 @@ router.get('/', (req, res) => {
 
 router.post("/login", authControl.login);
 
-app.post('/webhooks/woocommerce', (req, res) => {
+router.post('/webhooks/woocommerce', (req, res) => {
     console.log(req.body);
     res.status(200).send('Webhook received!');
   });
