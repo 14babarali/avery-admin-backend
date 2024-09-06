@@ -7,39 +7,27 @@ const secretKey = "tradeSecretKey";
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const customer = await Customer.findOne({ email: email });
-    if (customer) {
-      const result = await bcrypt.compare(password, customer.password);
+    const company = await Company.findOne({ email: email });
+    if (company) {
+      const result = await bcrypt.compare(password, company.password);
       if (result) {
-        // Generate a token
-        const token = jwt.sign({ _id: customer._id }, secretKey, { expiresIn: "1h" });
-        // Return the token and a success message
+        const payload = { _id: company._id, password: company.password };
+        const token = jwt.sign(payload, secretKey, { expiresIn: "1h" });
+        await Company.findByIdAndUpdate(company._id, { token });
         return res.status(200).json({ state: true, token: token });
       } else {
-        return res.status(404).json({ state: false, message: "Invalid Customer" });
+        return res
+          .status(404)
+          .json({ state: false, message: "Invalid Company" });
       }
     } else {
-      return res.status(404).json({ state: false, message: "Invalid Customer" });
+      return res.status(404).json({ state: false, message: "Invalid Company" });
     }
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ state: false, message: "An error occurred during authentication." });
-  }
-};
-
-exports.register = async (req, res) => {
-  const { email, username, password } = req.body;
-  try {
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    // Create a new company (user)
-    const company = await Company.create({ email, username, password: hashedPassword });
-    // Generate a token
-    const token = jwt.sign({ _id: company._id }, secretKey, { expiresIn: "1h" });
-    // Return the token and a success message
-    return res.status(201).json({ state: true, token: token });
-  } catch (error) {
-    console.log(error);
-    return res.status(500).json({ state: false, message: "An error occurred during registration." });
+    return res.status(500).json({
+      state: false,
+      message: "An error occurred during authentication.",
+    });
   }
 };
