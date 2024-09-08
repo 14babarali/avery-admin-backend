@@ -72,6 +72,11 @@ exports.approveOrder = async (req, res) => {
             return res.status(404).json({ error: 'Order not found' });
         }
 
+        // Validate if required fields are present
+        if (!order.customer || !order.customer.email || !order.plan) {
+            return res.status(400).json({ error: 'Order is missing required customer or plan details' });
+        }
+
         // Check if the account already exists
         let account = await Account.findOne({ customerEmail: order.customer.email });
 
@@ -83,10 +88,19 @@ exports.approveOrder = async (req, res) => {
                 customerEmail: order.customer.email,
                 companyEmail: order.customer.email,
                 plan: order.plan,
-                leverage: 10,
-                tradeSystem: 'MT4',
+                leverage: 0.0,
+                tradeSystem: 'MT4',  
                 accountUser: order.customer.email,
                 accountPassword: bcrypt.hashSync(generatedPassword, 10),
+                type: 'Phase1',  
+                dailyDrawdown: 0.0,  
+                totalDrawdown: 0.0,  
+                totalTarget: 0.0,  
+                profitShare: 0.0,  
+                breached: false,  
+                breachedReason: 'None',  
+                dayStartEquity: 0.0,  
+                phaseInitialBalance: 0.0  
             });
 
             await account.save();
