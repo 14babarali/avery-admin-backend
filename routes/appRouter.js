@@ -21,6 +21,8 @@ router.post('/webhooks/woocommerce', orderController.webhook );
   router.get('/orders', orderController.getOrders);
   // Define the route for updating an order using email
 router.put('/update-order', orderController.updateOrder);
+router.put('/:id/approve', orderController.approveOrder);
+
   
 
 

@@ -33,15 +33,82 @@ exports.webhook = async (req, res) => {
 }
 
 
-  exports.getOrders = async (req, res) => {
+exports.getOrders = async (req, res) => {
     const { search } = req.query;
-    const query = search ? { 'customer.email': new RegExp(search, 'i') } : {};
+    let query = {};
+
+    
+    if (search) {
+        
+        if (mongoose.Types.ObjectId.isValid(search)) {
+            query = { _id: search };
+        } 
+        
+        else {
+            query = {
+                $or: [
+                    { 'customer.email': new RegExp(search, 'i') },  
+                    { phone: new RegExp(search, 'i') }              
+                ]
+            };
+        }
+    }
+
     const orders = await Order.find(query).sort({ date_created: -1 });
     res.json(orders);
 };
 
 
 
+
+exports.approveOrder = async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        // Find the order by ID
+        const order = await Order.findById(id);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found' });
+        }
+
+        // Check if the account already exists
+        let account = await Account.findOne({ customerEmail: order.customer.email });
+
+        // If no account exists, create one
+        if (!account) {
+            const generatedPassword = generateRandomPassword();
+            account = new Account({
+                displayName: `${order.customer.first_name} ${order.customer.last_name}`,
+                customerEmail: order.customer.email,
+                companyEmail: order.customer.email,
+                plan: order.plan,
+                leverage: 10,
+                tradeSystem: 'MT4',
+                accountUser: order.customer.email,
+                accountPassword: bcrypt.hashSync(generatedPassword, 10),
+            });
+
+            await account.save();
+
+            // Send an email to the customer with their new account details
+            await sendEmail("AccountCreation", order.customer.email, {
+                name: account.displayName,
+                email: account.customerEmail,
+                password: generatedPassword,
+            });
+        }
+
+        // Update the order status to "Completed"
+        order.status = 'Completed';
+        order.account = account._id;
+        await order.save();
+
+        res.status(200).json({ message: 'Order approved successfully', order });
+    } catch (error) {
+        console.error('Error approving order:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
 
 
 
