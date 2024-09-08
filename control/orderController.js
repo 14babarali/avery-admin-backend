@@ -1,4 +1,5 @@
 
+const bcrypt = require("bcrypt");
 const { Order, Account } = require("../models");
 const { generateRandomPassword } = require("../utils/generateRandomPassword");
 const { sendEmail } = require("../utils/emailTrigger");
