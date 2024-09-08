@@ -30,6 +30,9 @@ exports.webhook = async (req, res) => {
         const subtotal = line_items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0).toFixed(2);
         const total = line_items.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2);
 
+        // Extract the plan from the first line_item's name field
+        const plan = line_items.length > 0 ? line_items[0].name : '';
+
         // Format the line items for the database
         const formattedLineItems = line_items.map(item => ({
             product_id: item.product_id,
@@ -54,6 +57,7 @@ exports.webhook = async (req, res) => {
                     status,
                     customer: { first_name, last_name, email },
                     phone,
+                    plan, // Add the plan to the update
                     line_items: formattedLineItems,
                 }
             );
@@ -68,6 +72,7 @@ exports.webhook = async (req, res) => {
                 status,
                 customer: { first_name, last_name, email },
                 phone,
+                plan, // Add the plan to the new order
                 line_items: formattedLineItems,
             });
 
@@ -80,6 +85,7 @@ exports.webhook = async (req, res) => {
         res.status(500).send('Error saving webhook data');
     }
 };
+
 
 
 
