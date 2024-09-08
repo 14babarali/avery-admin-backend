@@ -106,11 +106,11 @@ exports.approveOrder = async (req, res) => {
             await account.save();
 
             // Send an email to the customer with their new account details
-            await sendEmail("AccountCreation", order.customer.email, {
-                name: account.displayName,
-                email: account.customerEmail,
-                password: generatedPassword,
-            });
+            // await sendEmail("AccountCreation", order.customer.email, {
+            //     name: account.displayName,
+            //     email: account.customerEmail,
+            //     password: generatedPassword,
+            // });
         }
 
         // Update the order status to "Completed"
