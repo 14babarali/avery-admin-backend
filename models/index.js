@@ -18,8 +18,8 @@ db.Customer = require("./customer");
 db.Account = require("./account");
 db.Plan = require("./plan");
 db.KYC = require("./kyc");
-db.emailTemplate = require("./emailTemplate");
-db.smtpConfig = require("./smtpConfig");
+db.Template = require("./template");
+db.SmtpConfig = require("./smtpConfig");
 db.Order = require("./order");
 
 db.sync = async () => {

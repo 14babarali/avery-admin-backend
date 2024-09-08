@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const fileUpload =  require("express-fileupload");
 const path = require('path');
 const http = require('http');
 const compression = require('compression');
@@ -47,6 +48,12 @@ const startServer = async () => {
             next(err);
         }
     });
+
+    app.use(
+        fileUpload({
+          useTempFiles: true
+        })
+    );
 
     app.use("/", appRouter);
     app.use("/api", apiRouter);

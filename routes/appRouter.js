@@ -7,6 +7,7 @@ const accountController = require("../control/accountController");
 const companyController = require("../control/companyController");
 const planController = require("../control/planController");
 const { adminmiddleware } = require('../middleware/adminmiddleware');
+const emailController = require("../control/emailController");
 
 const app = express();
 
@@ -17,10 +18,9 @@ router.get('/', (req, res) => {
 
 // Webhook endpoint to receive WooCommerce order updates
 router.post('/webhooks/woocommerce', orderController.webhook );
-router.get('/orders', orderController.getOrders);
-router.put('/orders/:id', orderController.upDateOrder );
-router.delete('/orders/:id/archive', orderController.archiveOrder);
-
+  router.get('/orders', orderController.getOrders);
+  // Define the route for updating an order using email
+router.put('/update-order', orderController.updateOrder);
   
 
 
@@ -49,5 +49,15 @@ router.get("/getPlans", adminmiddleware, planController.getPlans);
 router.post("/createPlan", adminmiddleware, planController.createPlan);
 router.post("/updatePlan", adminmiddleware, planController.updatePlan);
 router.post("/deletePlan", adminmiddleware, planController.deletePlan);
+
+
+// SMTP Config routes
+router.get("/smtp-config", emailController.getSmtpConfig);
+router.put("/smtp-config", emailController.updateSmtpConfig);
+
+// Email Template routes
+router.get("/templates", emailController.getTemplates);
+router.post("/template", emailController.upsertTemplate);
+router.delete("/template/:id", emailController.deleteTemplate);
 
 module.exports = router;

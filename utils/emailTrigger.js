@@ -1,31 +1,31 @@
-//utils/emailTrigger
+// utils/emailTrigger.js
 const mailgun = require("mailgun-js");
-const { smtpConfig, emailTemplate } = require("../models");
+const { SmtpConfig, Template } = require("../models");
 
 async function sendEmail(templateName, to, variables = {}) {
     // Fetch SMTP configuration from the database
-    const smtpSettings = await smtpConfig.findOne();
+    const smtpSettings = await SmtpConfig.findOne();
     
     if (!smtpSettings) {
         throw new Error("SMTP configuration not found");
     }
 
-    // Initialize Mailgun with the SMTP configuration from the database
+    // Initialize Mailgun with the API key and domain from the configuration
     const mg = mailgun({
-        apiKey: smtpSettings.smtpPassword, // Using smtpPassword as the API key
-        domain: smtpSettings.smtpServer,   // Using the SMTP server as the domain
+        apiKey: smtpSettings.smtpPassword, 
+        domain: smtpSettings.smtpServer,   
     });
 
     // Fetch the email template by name
-    const template = await emailTemplate.findOne({ name: templateName });
+    const template = await Template.findOne({ name: templateName });
 
     if (!template) {
-        throw new Error("Template not found");
+        throw new Error("Email template not found");
     }
 
     // Prepare the email data with the template and variables
     const data = {
-        from: smtpSettings.fromEmail, // Dynamic "from" email
+        from: smtpSettings.fromEmail,
         to,
         subject: template.subject,
         html: replaceTemplateVars(template.body, variables),

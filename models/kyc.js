@@ -1,30 +1,49 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const KYCSchema = new Schema({
-    customer: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Customer",
-        
-    },
     name: {
         type: String,
         required: true,
     },
-    address: {
+    addressLine1: {
         type: String,
         required: true,
     },
-    birthday: {
-        type: Date,
+    addressLine2: {
+        type: String,
+        required: false,
+    },
+    city: {
+        type: String,
         required: true,
     },
-    idDocument: {
-        type: String, // I suggest file URL to come from cloudinary
+    province: {
+        type: String,
         required: true,
     },
-    proofOfAddress: {
-        type: String, // I suggest file URL to come from cloudinary
+    zipCode: {
+        type: String,
+        required: true,
+    },
+    country: {
+        type: String,
+        required: true,
+    },
+    phoneNumber: {
+        type: String,
+        required: true,
+    },
+    frontId: {
+        type: String, // URL or base64 string for the captured image
+        required: true,
+    },
+    backId: {
+        type: String, // URL or base64 string for the captured image
+        required: true,
+    },
+    faceShot: {
+        type: String, // URL or base64 string for the captured image
         required: true,
     },
     status: {
@@ -42,5 +61,5 @@ const KYCSchema = new Schema({
     timestamps: true,
 });
 
-const KYC = mongoose.model("KYC", KYCSchema);
+const KYC = mongoose.model('KYC', KYCSchema);
 module.exports = KYC;

@@ -30,16 +30,6 @@ const AccountSchema = new Schema(
       required: true,
       default: 0.0,
     },
-    //added payoutRequested field to the AccountSchema for payout button
-    payoutRequested: {
-      type: Boolean,
-      default: false,
-      required: true,
-  },
-  payoutRequestDate: {
-      type: Date,
-      default: null,
-  },
     currentEquity: {
       type: Number,
       required: true,

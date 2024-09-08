@@ -3,6 +3,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { secretKey } = require("../config/key");
 const logger = require("../utils/logger");
+const { upload } = require('../config/cloudinary');
+
 
 exports.createCustomer = async (req, res) => {
   try {
@@ -210,26 +212,39 @@ exports.deleteCustomer = async (req, res) => {
 //added to create kyc for customers 
 exports.kyc = async (req, res) => {
   try {
-      const kycData = new KYC({
-          customer: req.user._id,  
-          name: req.body.name,
-          address: req.body.address,
-          birthday: req.body.birthday,
-          idDocument: req.body.idDocument, // Assuming file path is provided
-          proofOfAddress: req.body.proofOfAddress, // Assuming file path is provided
-      });
+    const { name, addressLine1, addressLine2, city, province, zipCode, country, phoneNumber } = req.body;
 
-      const savedKYC = await kycData.save();
-      
-      // Update user's account with KYC status
-      await Account.findOneAndUpdate(
-          { accountUser: req.user._id },
-          { kycStatus: "Pending", kyc: savedKYC._id }
-      );
+    // Check if all required files are uploaded
+    if (!req.files || !req.files.frontId || !req.files.backId || !req.files.faceShot) {
+      return res.status(400).send({ message: 'Please upload all required images.' });
+    }
 
-      res.status(200).json({ message: "KYC submitted successfully", kyc: savedKYC });
+    // Upload images to Cloudinary
+    const frontIdResult = await upload(req.files.frontId.tempFilePath, 'kyc/frontId');
+    const backIdResult = await upload(req.files.backId.tempFilePath, 'kyc/backId');
+    const faceShotResult = await upload(req.files.faceShot.tempFilePath, 'kyc/faceShot');
+
+    // Save KYC data to MongoDB
+    const newKYC = new KYC({
+      name,
+      addressLine1,
+      addressLine2,
+      city,
+      province,
+      zipCode,
+      country,
+      phoneNumber,
+      frontId: frontIdResult.secure_url,
+      backId: backIdResult.secure_url,
+      faceShot: faceShotResult.secure_url,
+    });
+
+    await newKYC.save();
+
+    res.status(200).send({ message: 'KYC data submitted successfully.' });
   } catch (error) {
-      res.status(500).json({ message: "Error submitting KYC", error });
+    console.error(error);
+    res.status(500).send({ message: 'Server error. Please try again later.' });
   }
 };
 

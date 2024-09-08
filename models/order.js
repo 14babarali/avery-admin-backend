@@ -10,24 +10,24 @@ const lineItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-  order_key: { type: String, required: true },
-  total: { type: String, required: true },
-  subtotal: { type: String },
-  date_created: { type: Date, required: true },
-  date_modified: { type: Date },
-  status: { type: String, required: true },
-  archived: { type: Boolean, default: false },
-  customer: {
-    first_name: { type: String },
-    last_name: { type: String },
-    email: { type: String },
-  },
+    number: { type: String, unique: true, required: true }, 
+    total: { type: String, required: true },
+    subtotal: { type: String },
+    date_created: { type: Date, required: true },
+    date_modified: { type: Date },
+    status: { type: String, required: true },
+    archived: { type: Boolean, default: false },
+    customer: {
+      first_name: { type: String },
+      last_name: { type: String },
+      email: { type: String },
+    },
+    phone: { type: String },
+    plan: { type: String },
+    line_items: [lineItemSchema],
+    account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }, // Reference to the Account schema
+  });
   
-phone: { type: String },
-plan: { type: String },
-
-  line_items: [lineItemSchema],
-});
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;
