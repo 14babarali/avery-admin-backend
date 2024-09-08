@@ -12,18 +12,60 @@ exports.webhook = async (req, res) => {
         const orderData = req.body;
         console.log('Processing order data:', orderData);
 
-        // Extract the order number from the incoming data
-        const { number } = orderData;
+        const {
+            number,
+            total,
+            subtotal,
+            date_created,
+            date_modified,
+            status,
+            customer,
+            phone,
+            plan,
+            line_items,
+        } = orderData;
+
+        // Check if required fields exist
+        if (!number || !total || !customer || !customer.email || !line_items) {
+            return res.status(400).json({ error: 'Missing required order fields' });
+        }
 
         // Check for an existing order using the number
         const existingOrder = await Order.findOne({ number });
         
         if (existingOrder) {
             // Update the existing order with new data
-            await Order.updateOne({ number }, orderData);
+            await Order.updateOne({ number }, {
+                total,
+                subtotal,
+                date_created,
+                date_modified,
+                status,
+                customer,
+                phone: phone || existingOrder.phone,  // Fallback to existing phone if missing
+                plan: plan || existingOrder.plan,      // Fallback to existing plan if missing
+                line_items,
+            });
         } else {
             // Create a new order with the incoming data
-            await new Order(orderData).save();
+            const newOrder = new Order({
+                number,
+                total,
+                subtotal,
+                date_created,
+                date_modified,
+                status,
+                customer: {
+                    first_name: customer.first_name,
+                    last_name: customer.last_name,
+                    email: customer.email,
+                },
+                phone: phone || '',  // Default to empty if not present
+                plan: plan || 'Unknown Plan',  // Default to "Unknown Plan" if not present
+                line_items,
+            });
+
+            await newOrder.save();
         }
         
         res.status(200).send('Webhook data saved!');
@@ -31,7 +73,8 @@ exports.webhook = async (req, res) => {
         console.error(error);
         res.status(500).send('Error saving webhook data');
     }
-}
+};
+
 
 
 exports.getOrders = async (req, res) => {
