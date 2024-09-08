@@ -14,66 +14,75 @@ exports.webhook = async (req, res) => {
 
         const {
             number,
-            total,
-            subtotal,
+            status,
             date_created,
             date_modified,
-            status,
-            customer,
-            phone,
-            plan,
+            billing: { first_name, last_name, email, phone },
             line_items,
         } = orderData;
 
         // Check if required fields exist
-        if (!number || !total || !customer || !customer.email || !line_items) {
+        if (!number || !line_items || !email) {
             return res.status(400).json({ error: 'Missing required order fields' });
         }
 
-        // Check for an existing order using the number
+        // Calculate subtotal and total from line_items
+        const subtotal = line_items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0).toFixed(2);
+        const total = line_items.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2);
+
+        // Format the line items for the database
+        const formattedLineItems = line_items.map(item => ({
+            product_id: item.product_id,
+            name: item.name,
+            quantity: item.quantity,
+            subtotal: item.subtotal,
+            total: item.total,
+        }));
+
+        // Check for an existing order by the number
         const existingOrder = await Order.findOne({ number });
-        
+
         if (existingOrder) {
-            // Update the existing order with new data
-            await Order.updateOne({ number }, {
-                total,
-                subtotal,
-                date_created,
-                date_modified,
-                status,
-                customer,
-                phone: phone || existingOrder.phone,  // Fallback to existing phone if missing
-                plan: plan || existingOrder.plan,      // Fallback to existing plan if missing
-                line_items,
-            });
+            // Update the existing order
+            await Order.updateOne(
+                { number },
+                {
+                    total,
+                    subtotal,
+                    date_created: new Date(date_created),
+                    date_modified: new Date(date_modified),
+                    status,
+                    customer: { first_name, last_name, email },
+                    phone,
+                    line_items: formattedLineItems,
+                }
+            );
         } else {
-            // Create a new order with the incoming data
+            // Create a new order
             const newOrder = new Order({
                 number,
                 total,
                 subtotal,
-                date_created,
-                date_modified,
+                date_created: new Date(date_created),
+                date_modified: new Date(date_modified),
                 status,
-                customer: {
-                    first_name: customer.first_name,
-                    last_name: customer.last_name,
-                    email: customer.email,
-                },
-                phone: phone || '',  // Default to empty if not present
-                plan: plan || 'Unknown Plan',  // Default to "Unknown Plan" if not present
-                line_items,
+                customer: { first_name, last_name, email },
+                phone,
+                line_items: formattedLineItems,
             });
 
             await newOrder.save();
         }
-        
+
         res.status(200).send('Webhook data saved!');
     } catch (error) {
         console.error(error);
         res.status(500).send('Error saving webhook data');
     }
 };
+
+
+
 
 
 
