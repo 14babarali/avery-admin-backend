@@ -24,6 +24,7 @@ const AccountSchema = new Schema(
     plan: {
       type: String,
       required: true,
+     
     },
     balance: {
       type: Number,
@@ -43,6 +44,7 @@ const AccountSchema = new Schema(
     leverage: {
       type: Number,
       required: true,
+      default: 0.0,
     },
     type: {
       type: String,

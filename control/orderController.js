@@ -1,6 +1,6 @@
 
 const bcrypt = require("bcrypt");
-const { Order, Account } = require("../models");
+const { Order, Account, Customer } = require("../models");
 const { generateRandomPassword } = require("../utils/generateRandomPassword");
 const { sendEmail } = require("../utils/emailTrigger");
 
@@ -13,16 +13,16 @@ exports.webhook = async (req, res) => {
         console.log('Processing order data:', orderData);
 
         const {
-            number,
+            id, // ID for order_id
             status,
             date_created,
             date_modified,
-            billing: { first_name, last_name, email, phone },
+            billing: { first_name, last_name, email, phone, address_1, city, state, country, postcode },
             line_items,
         } = orderData;
 
         // Check if required fields exist
-        if (!number || !line_items || !email) {
+        if (!id || !line_items || line_items.length === 0 || !email) {
             return res.status(400).json({ error: 'Missing required order fields' });
         }
 
@@ -30,8 +30,8 @@ exports.webhook = async (req, res) => {
         const subtotal = line_items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0).toFixed(2);
         const total = line_items.reduce((sum, item) => sum + parseFloat(item.total), 0).toFixed(2);
 
-        // Extract the plan from the first line_item's name field
-        const plan = line_items.length > 0 ? line_items[0].name : '';
+        // Extract the order_name from the first line_item's name field
+        const order_name = line_items.length > 0 ? line_items[0].name : '';
 
         // Format the line items for the database
         const formattedLineItems = line_items.map(item => ({
@@ -42,13 +42,13 @@ exports.webhook = async (req, res) => {
             total: item.total,
         }));
 
-        // Check for an existing order by the number
-        const existingOrder = await Order.findOne({ number });
+        // Check for an existing order by the ID (order_id)
+        const existingOrder = await Order.findOne({ order_id: id });
 
         if (existingOrder) {
             // Update the existing order
             await Order.updateOne(
-                { number },
+                { order_id: id },
                 {
                     total,
                     subtotal,
@@ -57,14 +57,14 @@ exports.webhook = async (req, res) => {
                     status,
                     customer: { first_name, last_name, email },
                     phone,
-                    plan, // Add the plan to the update
+                    order_name, // Use order_name to avoid conflict
                     line_items: formattedLineItems,
                 }
             );
         } else {
             // Create a new order
             const newOrder = new Order({
-                number,
+                order_id: id,
                 total,
                 subtotal,
                 date_created: new Date(date_created),
@@ -72,22 +72,75 @@ exports.webhook = async (req, res) => {
                 status,
                 customer: { first_name, last_name, email },
                 phone,
-                plan, // Add the plan to the new order
+                order_name, // Add the order name
                 line_items: formattedLineItems,
             });
 
             await newOrder.save();
         }
 
-        res.status(200).send('Webhook data saved!');
+        // If status is 'completed' or 'success', create customer and account
+        if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
+            const randomPassword = generateRandomPassword();
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            // Create customer
+            const newCustomer = new Customer({
+                email,
+                companyEmail: email,
+                password: hashedPassword,
+                active: true,
+                firstName: first_name,
+                lastName: last_name,
+                phone,
+                country,
+                state,
+                city,
+                addressLine1: address_1,
+                zip: postcode,
+                status: "allow",
+                language: "en",
+                birthday: new Date(), // Placeholder
+            });
+
+            const savedCustomer = await newCustomer.save();
+
+            // Create account
+            const newAccount = new Account({
+                displayName: `${first_name} ${last_name}`,
+                customerEmail: email,
+                companyEmail: email,
+                plan: "null",
+                type: "Phase1", // Adjust if needed
+                accountUser: email,
+                accountPassword: randomPassword,
+                tradeSystem: "MT4",
+            });
+
+            await newAccount.save();
+
+            // Send email to customer with login details
+            // await sendEmail({
+            //     to: email,
+            //     subject: 'Your Account is Ready',
+            //     text: `Hello ${first_name},\nYour account has been created. Your login details are:\nUsername: ${email}\nPassword: ${randomPassword}\nPlease login to manage your account.`,
+            // });
+
+        } else if (status.toLowerCase() === 'failed') {
+            // Send failure email
+            // await sendEmail({
+            //     to: email,
+            //     subject: 'Order Failed',
+            //     text: `Hello ${first_name},\nWe regret to inform you that your order with ID ${id} could not be processed.`,
+            // });
+        }
+
+        res.status(200).send('Webhook data processed and saved!');
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error saving webhook data');
+        console.error('Error processing webhook:', error);
+        res.status(500).send('Error processing webhook data');
     }
 };
-
-
-
 
 
 
@@ -119,114 +172,6 @@ exports.getOrders = async (req, res) => {
 
 
 
-
-exports.approveOrder = async (req, res) => {
-    const { id } = req.params;
-    
-    try {
-        // Find the order by ID
-        const order = await Order.findById(id);
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found' });
-        }
-
-        // Validate if required fields are present
-        if (!order.customer || !order.customer.email || !order.plan) {
-            return res.status(400).json({ error: 'Order is missing required customer or plan details' });
-        }
-
-        // Check if the account already exists
-        let account = await Account.findOne({ customerEmail: order.customer.email });
-
-        // If no account exists, create one
-        if (!account) {
-            const generatedPassword = generateRandomPassword();
-            account = new Account({
-                displayName: `${order.customer.first_name} ${order.customer.last_name}`,
-                customerEmail: order.customer.email,
-                companyEmail: order.customer.email,
-                plan: order.plan,
-                leverage: 0.0,
-                tradeSystem: 'MT4',  
-                accountUser: order.customer.email,
-                accountPassword: bcrypt.hashSync(generatedPassword, 10),
-                type: 'Phase1',  
-                dailyDrawdown: 0.0,  
-                totalDrawdown: 0.0,  
-                totalTarget: 0.0,  
-                profitShare: 0.0,  
-                breached: false,  
-                breachedReason: 'None',  
-                dayStartEquity: 0.0,  
-                phaseInitialBalance: 0.0  
-            });
-
-            await account.save();
-
-            // Send an email to the customer with their new account details
-            // await sendEmail("AccountCreation", order.customer.email, {
-            //     name: account.displayName,
-            //     email: account.customerEmail,
-            //     password: generatedPassword,
-            // });
-        }
-
-        // Update the order status to "Completed"
-        order.status = 'Completed';
-        order.account = account._id;
-        await order.save();
-
-        res.status(200).json({ message: 'Order approved successfully', order });
-    } catch (error) {
-        console.error('Error approving order:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-};
-
-
-
-exports.updateOrder = async function updateOrder(req, res) {
-    try {
-        const { email, phone, plan, number, first_name, last_name } = req.body; // Use `number` instead of `orderKey`
-
-        // Check if an account exists for the given email
-        let account = await Account.findOne({ customerEmail: email });
-
-        if (!account) {
-            const generatedPassword = generateRandomPassword();
-            account = new Account({
-                displayName: `${first_name} ${last_name}`,
-                customerEmail: email,
-                companyEmail: email,
-                plan: plan,
-                leverage: 10,
-                tradeSystem: 'MT4',
-                accountUser: email,
-                accountPassword: bcrypt.hashSync(generatedPassword, 10),
-            });
-
-            await account.save();
-
-            await sendEmail("AccountCreation", email, {
-                name: account.displayName,
-                email: account.customerEmail,
-                password: generatedPassword,
-            });
-        }
-
-        // Update or create the order based on number
-        const order = await Order.findOneAndUpdate(
-            { order_key: number }, // Match the schema field name with webhook payload
-            { phone, plan, account: account._id },
-            { new: true, upsert: true }
-        );
-
-        res.status(200).send({ message: 'Order updated successfully', order });
-    } catch (err) {
-        console.error("Error updating order:", err);
-        res.status(500).send({ error: 'Error updating order' });
-    }
-};
 
 
 

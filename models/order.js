@@ -10,7 +10,7 @@ const lineItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-    number: { type: String, unique: true, required: true }, 
+    order_id: { type: String, unique: true, required: true }, 
     total: { type: String, required: true },
     subtotal: { type: String },
     date_created: { type: Date, required: true },
@@ -21,9 +21,10 @@ const orderSchema = new mongoose.Schema({
       first_name: { type: String },
       last_name: { type: String },
       email: { type: String },
+      postcode: { type: String },
     },
     phone: { type: String },
-    plan: { type: String },
+    order_name: { type: String },
     line_items: [lineItemSchema],
     account: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' }, // Reference to the Account schema
   });

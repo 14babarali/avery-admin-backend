@@ -37,10 +37,11 @@ const CustomerSchema = new Schema(
     lastName: {
       type: String,
       required: true,
+      default: null,
     },
     nickName: {
       type: String,
-      required: true,
+      default: null,
     },
     birthday: {
       type: Date,
