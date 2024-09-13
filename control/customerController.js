@@ -209,42 +209,4 @@ exports.deleteCustomer = async (req, res) => {
 };
 
 
-//added to create kyc for customers 
-exports.kyc = async (req, res) => {
-  try {
-    const { name, addressLine1, addressLine2, city, province, zipCode, country, phoneNumber } = req.body;
-
-    // Check if all required files are uploaded
-    if (!req.files || !req.files.frontId || !req.files.backId || !req.files.faceShot) {
-      return res.status(400).send({ message: 'Please upload all required images.' });
-    }
-
-    // Upload images to Cloudinary
-    const frontIdResult = await upload(req.files.frontId.tempFilePath, 'kyc/frontId');
-    const backIdResult = await upload(req.files.backId.tempFilePath, 'kyc/backId');
-    const faceShotResult = await upload(req.files.faceShot.tempFilePath, 'kyc/faceShot');
-
-    // Save KYC data to MongoDB
-    const newKYC = new KYC({
-      name,
-      addressLine1,
-      addressLine2,
-      city,
-      province,
-      zipCode,
-      country,
-      phoneNumber,
-      frontId: frontIdResult.secure_url,
-      backId: backIdResult.secure_url,
-      faceShot: faceShotResult.secure_url,
-    });
-
-    await newKYC.save();
-
-    res.status(200).send({ message: 'KYC data submitted successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Server error. Please try again later.' });
-  }
-};
 

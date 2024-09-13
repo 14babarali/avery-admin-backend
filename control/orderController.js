@@ -40,6 +40,7 @@ exports.webhook = async (req, res) => {
             quantity: item.quantity,
             subtotal: item.subtotal,
             total: item.total,
+            price: item.price,
         }));
 
         // Check for an existing order by the ID (order_id)
@@ -172,7 +173,34 @@ exports.getOrders = async (req, res) => {
 
 
 
-
+//Update status
+exports.updateStatus = async (req, res) => {
+    try {
+      const { order_id } = req.params;
+      const { status } = req.body;
+  
+      // Validate status (optional, you can add your own validation logic here)
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+  
+      // Find and update the order
+      const order = await Order.findOneAndUpdate(
+        { order_id },
+        { $set: { status, date_modified: new Date() } }, // Update status and modify date
+        { new: true, runValidators: true } // Return the updated document and validate
+      );
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      res.status(200).json({ message: 'Order status updated', order });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
 
 
 

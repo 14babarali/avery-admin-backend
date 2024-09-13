@@ -7,10 +7,11 @@ const lineItemSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   subtotal: { type: String },
   total: { type: String },
+  price: { type: String },
 });
 
 const orderSchema = new mongoose.Schema({
-    order_id: { type: String, unique: true, required: true }, 
+    order_id: { type: String, required: true }, 
     total: { type: String, required: true },
     subtotal: { type: String },
     date_created: { type: Date, required: true },

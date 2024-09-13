@@ -19,6 +19,7 @@ router.get('/', (req, res) => {
 // Webhook endpoint to receive WooCommerce order updates
 router.post('/webhooks/woocommerce', orderController.webhook );
   router.get('/orders', orderController.getOrders);
+  router.patch('/:order_id/status', orderController.updateStatus)
   // Define the route for updating an order using email
 
 // router.put('/:id/approve', orderController.approveOrder);
@@ -31,8 +32,7 @@ router.post("/login", authControl.login);
 
 
 
-//submit kyc endpoint
-router.post("/submit-kyc", customerController.kyc )
+
 
 router.post("/createCompany", adminmiddleware, companyController.createCompany)
 
