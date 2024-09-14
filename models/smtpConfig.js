@@ -1,15 +1,46 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
+
 const smtpConfigSchema = new Schema({
-    fromEmail: { type: String, required: true },
-    smtpPassword: { type: String, required: true },
-    smtpServer: { type: String, required: true },
-    smtpPort: { type: Number, required: true },
-    supportEmail: { type: String, required: true },
-    startTls: { type: Number, required: true },
-    tls: { type: Number, required: true },
-    smtpUsername: { type: String, required: true }
+    fromEmail: { 
+        type: String, 
+        default: process.env.FROM_EMAIL,  
+        required: true 
+    },
+    smtpPassword: { 
+        type: String, 
+        default: process.env.SMTP_PASSWORD,  
+        required: true 
+    },
+    smtpServer: { 
+        type: String, 
+        default: process.env.SMTP_SERVER,  
+        required: true 
+    },
+    smtpPort: { 
+        type: Number, 
+        default: process.env.SMTP_PORT || 587,  
+        required: true 
+    },
+    supportEmail: { 
+        type: String, 
+        default: process.env.SUPPORT_EMAIL,  
+        required: true 
+    },
+    startTls: { 
+        type: Boolean, 
+        default: process.env.START_TLS === 'true'  
+    },
+    tls: { 
+        type: Boolean, 
+        default: process.env.TLS === 'true'  
+    },
+    smtpUsername: { 
+        type: String, 
+        default: process.env.SMTP_USERNAME,  
+        required: true 
+    }
 }, { timestamps: true });
 
 const SmtpConfig = mongoose.model('SmtpConfig', smtpConfigSchema);

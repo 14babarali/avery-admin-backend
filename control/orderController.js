@@ -120,20 +120,19 @@ exports.webhook = async (req, res) => {
 
             await newAccount.save();
 
-            // Send email to customer with login details
-            // await sendEmail({
-            //     to: email,
-            //     subject: 'Your Account is Ready',
-            //     text: `Hello ${first_name},\nYour account has been created. Your login details are:\nUsername: ${email}\nPassword: ${randomPassword}\nPlease login to manage your account.`,
-            // });
+            // Send the email using a template for account creation
+            await sendEmail("AccountCreated", email, {
+                first_name,
+                email,
+                password: randomPassword,
+            });
 
         } else if (status.toLowerCase() === 'failed') {
-            // Send failure email
-            // await sendEmail({
-            //     to: email,
-            //     subject: 'Order Failed',
-            //     text: `Hello ${first_name},\nWe regret to inform you that your order with ID ${id} could not be processed.`,
-            // });
+             // Send the failure email using a template
+             await sendEmail("OrderFailed", email, {
+                first_name,
+                order_id: id,
+            });
         }
 
         res.status(200).send('Webhook data processed and saved!');
