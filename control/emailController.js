@@ -35,10 +35,10 @@ exports.getTemplates = async (req, res) => {
 // Create or Update an email template
 exports.upsertTemplate = async (req, res) => {
     try {
-        const { name, subject, body, trigger } = req.body;
+        const { name, subject, body, trigger, emailTo } = req.body;
         const template = await Template.findOneAndUpdate(
             { name },
-            { subject, body, trigger },
+            { subject, body, trigger, emailTo },
             { new: true, upsert: true }
         );
         res.json(template);

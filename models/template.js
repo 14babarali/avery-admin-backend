@@ -7,6 +7,10 @@ const TemplateSchema = new Schema({
         type: String,
         required: true,
     },
+    emailTo: {
+        type: String,
+       
+    },
     subject: {
         type: String,
         required: true,

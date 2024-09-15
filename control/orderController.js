@@ -120,16 +120,16 @@ exports.webhook = async (req, res) => {
 
             await newAccount.save();
 
-            // Send the email using a template for account creation
-            await sendEmail("AccountCreated", email, {
-                first_name,
-                email,
-                password: randomPassword,
-            });
+           // Send the email using the 'AccountCreated' template
+           await sendEmail("AccountCreated", email, {
+            first_name,
+            email,
+            password: randomPassword,
+        });
 
         } else if (status.toLowerCase() === 'failed') {
-             // Send the failure email using a template
-             await sendEmail("OrderFailed", email, {
+            // Send the failure email using the 'OrderFailed' template
+            await sendEmail("OrderFailed", email, {
                 first_name,
                 order_id: id,
             });
