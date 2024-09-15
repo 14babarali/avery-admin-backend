@@ -8,6 +8,7 @@ const companyController = require("../control/companyController");
 const planController = require("../control/planController");
 const { adminmiddleware } = require('../middleware/adminmiddleware');
 const emailController = require("../control/emailController");
+const agreementController = require("../control/agreementController");
 
 const app = express();
 
@@ -61,5 +62,8 @@ router.put("/smtp-config", emailController.updateSmtpConfig);
 router.get("/templates", emailController.getTemplates);
 router.post("/template", emailController.upsertTemplate);
 router.delete("/template/:id", emailController.deleteTemplate);
+
+// POST request to create a new agreement
+router.post('/agreement',  agreementController.createAgreement);
 
 module.exports = router;

@@ -21,6 +21,7 @@ db.KYC = require("./kyc");
 db.Template = require("./template");
 db.SmtpConfig = require("./smtpConfig");
 db.Order = require("./order");
+db.Agreement = require("./agreement");
 
 db.sync = async () => {
   // Migrate (clear collections and add initial data if necessary)
