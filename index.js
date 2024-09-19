@@ -13,6 +13,8 @@ const loaders = require("./loaders");
 const logger = require('./utils/logger');
 const { port } = require('./config/main');
 const { dailyReset } = require('./utils/dailyReset');
+const { Company } = require("./models");
+
 
 
 const app = express();
@@ -60,7 +62,7 @@ const startServer = async () => {
     app.use("/api", apiRouter);
 
    
-  
+
 
     await loaders({ app });
     server.listen(port, () => {

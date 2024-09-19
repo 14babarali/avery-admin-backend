@@ -15,5 +15,5 @@ module.exports = {
         uri: process.env.DB_URI || process.env.DEV_DB_URL ,  //`mongodb://127.0.0.1:27017/trading`
     },
 
-    tradeAPI: process.env.TRADE_API || "http://127.0.0.1:8000/thirdParty",
+    tradeAPI: process.env.TRADE_API || "http://127.0.0.1:8000/tradenow",
 }
