@@ -165,33 +165,88 @@ exports.getOrders = async (req, res) => {
 //Update status
 exports.updateStatus = async (req, res) => {
     try {
-      const { order_id } = req.params;
-      const { status } = req.body;
-  
-      // Validate status (optional, you can add your own validation logic here)
-      if (!status) {
-        return res.status(400).json({ message: 'Status is required' });
-      }
+        const { order_id } = req.params;
+        const { status } = req.body;
 
-    
-  
-      // Find and update the order
-      const order = await Order.findOneAndUpdate(
-        { order_id },
-        { $set: { status, date_modified: new Date() } }, // Update status and modify date
-        { new: true, runValidators: true } // Return the updated document and validate
-      );
-  
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      res.status(200).json({ message: 'Order status updated', order });
+        // Validate status
+        if (!status) {
+            return res.status(400).json({ message: 'Status is required' });
+        }
+
+        // Find and update the order
+        const order = await Order.findOneAndUpdate(
+            { order_id },
+            { $set: { status, date_modified: new Date() } }, // Update status and modify date
+            { new: true, runValidators: true } // Return the updated document and validate
+        );
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // If status is 'completed' or 'success', check for existing accounts
+        if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
+            const email = order.customer.email; // Get the customer's email from the order
+
+            // Check for existing customer
+            const existingCustomer = await Customer.findOne({ email });
+            const existingAccount = await Account.findOne({ customerEmail: email });
+
+            if (!existingCustomer && !existingAccount) {
+                const randomPassword = generateRandomPassword();
+                const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+                // Create customer
+                const newCustomer = new Customer({
+                    email,
+                    companyEmail: email,
+                    password: hashedPassword,
+                    active: true,
+                    firstName: order.customer.first_name,
+                    lastName: order.customer.last_name,
+                    phone: order.phone,
+                    country: order.customer.country,
+                    state: order.customer.state,
+                    city: order.customer.city,
+                    addressLine1: order.customer.addressLine1,
+                    zip: order.customer.zip,
+                    status: "allow",
+                    language: "en",
+                    birthday: new Date(), // Placeholder
+                });
+
+                await newCustomer.save();
+
+                // Create account
+                const newAccount = new Account({
+                    displayName: `${order.customer.first_name} ${order.customer.last_name}`,
+                    customerEmail: email,
+                    companyEmail: email,
+                    plan: "null",
+                    type: "Phase1", // Adjust if needed
+                    accountUser: email,
+                    accountPassword: randomPassword,
+                    tradeSystem: "MT4",
+                });
+
+                await newAccount.save();
+
+                // Send the email using the 'AccountCreated' template
+                await sendEmail("AccountCreated", email, {
+                    first_name: order.customer.first_name,
+                    email,
+                    password: randomPassword,
+                });
+            }
+        }
+
+        res.status(200).json({ message: 'Order status updated', order });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
-  };
+};
+
 
 
 
