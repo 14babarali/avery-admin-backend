@@ -61,7 +61,9 @@ router.put("/smtp-config", emailController.updateSmtpConfig);
 // Email Template routes
 router.get("/templates", emailController.getTemplates);
 router.post("/template", emailController.upsertTemplate);
+router.put("/template/:id", emailController.updateTemplate);
 router.delete("/template/:id", emailController.deleteTemplate);
+
 
 // POST request to create a new agreement
 router.post('/agreement',  agreementController.createAgreement);

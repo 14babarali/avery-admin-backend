@@ -47,6 +47,22 @@ exports.upsertTemplate = async (req, res) => {
     }
 };
 
+// Update an existing email template
+exports.updateTemplate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { subject, body, trigger, emailTo } = req.body;
+        const updatedTemplate = await Template.findByIdAndUpdate(
+            id,
+            { subject, body, trigger, emailTo },
+            { new: true }
+        );
+        res.json(updatedTemplate);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating email template" });
+    }
+};
+
 // Delete an email template
 exports.deleteTemplate = async (req, res) => {
     try {
