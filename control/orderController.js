@@ -146,29 +146,19 @@ exports.webhook = async (req, res) => {
 
 
 exports.getOrders = async (req, res) => {
-    const { search } = req.query;
-    let query = {};
+    try {
+        // Fetch all orders from the database
+        const orders = await Order.find({}); // Assuming `Order` is your Mongoose model
 
-    
-    if (search) {
-        
-        if (mongoose.Types.ObjectId.isValid(search)) {
-            query = { _id: search };
-        } 
-        
-        else {
-            query = {
-                $or: [
-                    { 'customer.email': new RegExp(search, 'i') },  
-                    { phone: new RegExp(search, 'i') }              
-                ]
-            };
-        }
+        // Send back the orders as a response
+        res.status(200).json(orders);
+    } catch (error) {
+        // Handle errors (e.g., log them and send a 500 response)
+        console.error('Error fetching orders:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    const orders = await Order.find(query).sort({ date_created: -1 });
-    res.json(orders);
 };
+
 
 
 
