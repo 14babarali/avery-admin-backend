@@ -163,6 +163,7 @@ exports.getOrders = async (req, res) => {
 
 
 //Update status
+
 exports.updateStatus = async (req, res) => {
     try {
         const { order_id } = req.params;
@@ -184,6 +185,9 @@ exports.updateStatus = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Log the order object for debugging
+        console.log('Order details:', order);
+
         // If status is 'completed' or 'success', check for existing accounts
         if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
             const email = order.customer.email; // Get the customer's email from the order
@@ -196,6 +200,21 @@ exports.updateStatus = async (req, res) => {
                 const randomPassword = generateRandomPassword();
                 const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
+                // Check if all required fields are present
+                const { country, state, city, zip, addressLine1 } = order.customer;
+                
+                // Log missing fields for debugging
+                if (!country || !state || !city || !zip || !addressLine1) {
+                    console.error('Missing required customer fields:', {
+                        country,
+                        state,
+                        city,
+                        zip,
+                        addressLine1
+                    });
+                    return res.status(400).json({ message: 'Missing required customer information' });
+                }
+
                 // Create customer
                 const newCustomer = new Customer({
                     email,
@@ -205,11 +224,11 @@ exports.updateStatus = async (req, res) => {
                     firstName: order.customer.first_name,
                     lastName: order.customer.last_name,
                     phone: order.phone,
-                    country: order.customer.country,
-                    state: order.customer.state,
-                    city: order.customer.city,
-                    addressLine1: order.customer.addressLine1,
-                    zip: order.customer.zip,
+                    country,
+                    state,
+                    city,
+                    addressLine1,
+                    zip,
                     status: "allow",
                     language: "en",
                     birthday: new Date(), // Placeholder
