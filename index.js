@@ -28,8 +28,11 @@ const startServer = async () => {
     app.use(express.static(path.join(__dirname, 'public')));
 
     app.use(cors({
-        origin: "*"
-    }))
+        origin: "*", 
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+        credentials: true 
+    }));
+    
     app.use(bodyParser.json({ limit: "10mb" }));
     app.use(express.urlencoded({ extended: true }));
     app.use(compression());
