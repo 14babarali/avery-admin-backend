@@ -120,6 +120,10 @@ const AccountSchema = new Schema(
       default: "Not Submitted",
       required: true,
   },
+  orders: [{ 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'Order'  // Reference to Order schema
+  }],
   },
   {
     collection: "accounts",

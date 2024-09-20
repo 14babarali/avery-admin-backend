@@ -52,11 +52,6 @@ const CustomerSchema = new Schema(
       required: true,
       default: 0,
     },
-    orders: {
-      type: Number,
-      required: true,
-      default: 0,
-    },
     referrals: {
       type: Number,
       default: 0,
@@ -131,6 +126,10 @@ const CustomerSchema = new Schema(
       type: String,
       default: null,
     },
+    orders: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'Order'  // Reference to Order schema
+    }],
   },
   {
     collection: "customers",

@@ -43,49 +43,14 @@ exports.webhook = async (req, res) => {
             price: item.price,
         }));
 
-        // Check for an existing order by the ID (order_id)
-        const existingOrder = await Order.findOne({ order_id: id });
+        // Check if customer exists
+        let existingCustomer = await Customer.findOne({ email });
 
-        if (existingOrder) {
-            // Update the existing order
-            await Order.updateOne(
-                { order_id: id },
-                {
-                    total,
-                    subtotal,
-                    date_created: new Date(date_created),
-                    date_modified: new Date(date_modified),
-                    status,
-                    customer: { first_name, last_name, email },
-                    phone,
-                    order_name, // Use order_name to avoid conflict
-                    line_items: formattedLineItems,
-                }
-            );
-        } else {
-            // Create a new order
-            const newOrder = new Order({
-                order_id: id,
-                total,
-                subtotal,
-                date_created: new Date(date_created),
-                date_modified: new Date(date_modified),
-                status,
-                customer: { first_name, last_name, email },
-                phone,
-                order_name, // Add the order name
-                line_items: formattedLineItems,
-            });
-
-            await newOrder.save();
-        }
-
-        // If status is 'completed' or 'success', create customer and account
-        if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
-            const randomPassword = generateRandomPassword();
+        if (!existingCustomer) {
+            // Customer does not exist, so create a new one
+            const randomPassword = generateRandomPassword(); // Assume you have a function to generate random passwords
             const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-            // Create customer
             const newCustomer = new Customer({
                 email,
                 companyEmail: email,
@@ -101,39 +66,92 @@ exports.webhook = async (req, res) => {
                 zip: postcode,
                 status: "allow",
                 language: "en",
-                birthday: new Date(), // Placeholder
+                birthday: new Date(), // Placeholder for birthday if not provided
             });
 
-            const savedCustomer = await newCustomer.save();
+            existingCustomer = await newCustomer.save();
 
-            // Create account
+            // Send account created email
+            await sendEmail("AccountCreated", email, {
+                first_name,
+                email,
+                password: randomPassword,
+            });
+
+            // Create the Account for the new customer
             const newAccount = new Account({
                 displayName: `${first_name} ${last_name}`,
                 customerEmail: email,
                 companyEmail: email,
                 plan: "null",
-                type: "Phase1", // Adjust if needed
+                type: "Phase1", // Adjust as needed
                 accountUser: email,
                 accountPassword: randomPassword,
                 tradeSystem: "MT4",
+                orders: [], // No orders yet, will be added later
             });
 
             await newAccount.save();
-
-           // Send the email using the 'AccountCreated' template
-           await sendEmail("AccountCreated", email, {
-            first_name,
-            email,
-            password: randomPassword,
-        });
-
-        } else if (status.toLowerCase() === 'failed') {
-            // Send the failure email using the 'OrderFailed' template
-            await sendEmail("OrderFailed", email, {
-                first_name,
-                order_id: id,
-            });
         }
+
+        // Now create or update the order and reference the customerRef (customer _id)
+        const existingOrder = await Order.findOne({ order_id: id });
+
+        if (existingOrder) {
+            // Update the existing order
+            await Order.updateOne(
+                { order_id: id },
+                {
+                    total,
+                    subtotal,
+                    date_created: new Date(date_created),
+                    date_modified: new Date(date_modified),
+                    status,
+                    customerRef: existingCustomer._id, // Reference to the Customer
+                    customer: {
+                        first_name,
+                        last_name,
+                        email,
+                        postcode,
+                    },
+                    phone,
+                    order_name, // Use order_name to avoid conflict
+                    line_items: formattedLineItems,
+                }
+            );
+        } else {
+            // Create a new order
+            const newOrder = new Order({
+                order_id: id,
+                total,
+                subtotal,
+                date_created: new Date(date_created),
+                date_modified: new Date(date_modified),
+                status,
+                customerRef: existingCustomer._id, // Reference to the Customer
+                customer: {
+                    first_name,
+                    last_name,
+                    email,
+                    postcode,
+                },
+                phone,
+                order_name, // Add the order name
+                line_items: formattedLineItems,
+            });
+
+            const savedOrder = await newOrder.save();
+
+            // Add the newly created order to the customer's account
+            let customerAccount = await Account.findOne({ customerEmail: email });
+
+            if (customerAccount) {
+                customerAccount.orders.push(savedOrder._id); // Add order reference to the account
+                await customerAccount.save();
+            }
+        }
+
+       
 
         res.status(200).send('Webhook data processed and saved!');
     } catch (error) {
@@ -141,6 +159,7 @@ exports.webhook = async (req, res) => {
         res.status(500).send('Error processing webhook data');
     }
 };
+
 
 
 
@@ -166,105 +185,31 @@ exports.getOrders = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
     try {
-        const { order_id } = req.params;
-        const { status } = req.body;
-
-        // Validate status
-        if (!status) {
-            return res.status(400).json({ message: 'Status is required' });
-        }
-
-        // Find and update the order
-        const order = await Order.findOneAndUpdate(
-            { order_id },
-            { $set: { status, date_modified: new Date() } }, // Update status and modify date
-            { new: true, runValidators: true } // Return the updated document and validate
-        );
-
-        if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        // Log the order object for debugging
-        console.log('Order details:', order);
-
-        // If status is 'completed' or 'success', check for existing accounts
-        if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'success') {
-            const email = order.customer.email; // Get the customer's email from the order
-
-            // Check for existing customer
-            const existingCustomer = await Customer.findOne({ email });
-            const existingAccount = await Account.findOne({ customerEmail: email });
-
-            if (!existingCustomer && !existingAccount) {
-                const randomPassword = generateRandomPassword();
-                const hashedPassword = await bcrypt.hash(randomPassword, 10);
-
-                // Check if all required fields are present
-                const { country, state, city, zip, addressLine1 } = order.customer;
-                
-                // Log missing fields for debugging
-                if (!country || !state || !city || !zip || !addressLine1) {
-                    console.error('Missing required customer fields:', {
-                        country,
-                        state,
-                        city,
-                        zip,
-                        addressLine1
-                    });
-                    return res.status(400).json({ message: 'Missing required customer information' });
-                }
-
-                // Create customer
-                const newCustomer = new Customer({
-                    email,
-                    companyEmail: email,
-                    password: hashedPassword,
-                    active: true,
-                    firstName: order.customer.first_name,
-                    lastName: order.customer.last_name,
-                    phone: order.phone,
-                    country,
-                    state,
-                    city,
-                    addressLine1,
-                    zip,
-                    status: "allow",
-                    language: "en",
-                    birthday: new Date(), // Placeholder
-                });
-
-                await newCustomer.save();
-
-                // Create account
-                const newAccount = new Account({
-                    displayName: `${order.customer.first_name} ${order.customer.last_name}`,
-                    customerEmail: email,
-                    companyEmail: email,
-                    plan: "null",
-                    type: "Phase1", // Adjust if needed
-                    accountUser: email,
-                    accountPassword: randomPassword,
-                    tradeSystem: "MT4",
-                });
-
-                await newAccount.save();
-
-                // Send the email using the 'AccountCreated' template
-                await sendEmail("AccountCreated", email, {
-                    first_name: order.customer.first_name,
-                    email,
-                    password: randomPassword,
-                });
-            }
-        }
-
-        res.status(200).json({ message: 'Order status updated', order });
+      const { order_id } = req.params;
+      const { status } = req.body;
+  
+      // Validate status (optional, you can add your own validation logic here)
+      if (!status) {
+        return res.status(400).json({ message: 'Status is required' });
+      }
+  
+      // Find and update the order
+      const order = await Order.findOneAndUpdate(
+        { order_id },
+        { $set: { status, date_modified: new Date() } }, // Update status and modify date
+        { new: true, runValidators: true } // Return the updated document and validate
+      );
+  
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      res.status(200).json({ message: 'Order status updated', order });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
     }
-};
+  };
 
 
 

@@ -11,6 +11,7 @@ const lineItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
+    customerRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
     order_id: { type: String, required: true }, 
     total: { type: String, required: true },
     subtotal: { type: String },
