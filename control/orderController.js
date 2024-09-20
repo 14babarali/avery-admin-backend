@@ -173,8 +173,7 @@ exports.updateStatus = async (req, res) => {
         return res.status(400).json({ message: 'Status is required' });
       }
 
-      // Convert status to lowercase
-      status = status.toLowerCase();
+    
   
       // Find and update the order
       const order = await Order.findOneAndUpdate(
